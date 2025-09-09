@@ -1,5 +1,9 @@
 # Dotenv
 
+[![Tests Status](https://github.com/rfberaldo/dotenv/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/rfberaldo/dotenv/actions/workflows/go.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rfberaldo/dotenv)](https://goreportcard.com/report/github.com/rfberaldo/dotenv)
+[![Go Reference](https://pkg.go.dev/badge/github.com/rfberaldo/dotenv.svg)](https://pkg.go.dev/github.com/rfberaldo/dotenv)
+
 > The most stupid simple dotenv package.
 
 Multiline is not allowed, dotenv considers the key being what's before the first equal sign, and the value being what's after up to the line break.
