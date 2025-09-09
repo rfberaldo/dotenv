@@ -1,4 +1,4 @@
-# Dotenv
+# dotenv
 
 [![Tests Status](https://github.com/rfberaldo/dotenv/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/rfberaldo/dotenv/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rfberaldo/dotenv)](https://goreportcard.com/report/github.com/rfberaldo/dotenv)
