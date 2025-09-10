@@ -14,6 +14,22 @@ type pair struct {
 	v string
 }
 
+// Parse reads every line from r, empty lines and lines that starts with '#' are discarded.
+//
+// Value should not contain line breaks or quotes, all characters after the
+// first equal sign up to the line break are considered. Values are not expanded.
+func Parse(r io.Reader) (map[string]string, error) {
+	pairs, err := parse(r)
+	if err != nil {
+		return nil, err
+	}
+	kv := make(map[string]string, len(pairs))
+	for _, pair := range pairs {
+		kv[pair.k] = pair.v
+	}
+	return kv, nil
+}
+
 func parseFile(path string) ([]pair, error) {
 	path = filepath.FromSlash(path)
 	file, err := os.Open(path)

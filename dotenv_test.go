@@ -9,11 +9,12 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	t.Setenv("ENV", "dev") // predefined var
+	t.Setenv("ENV", "dev")   // predefined var
+	t.Setenv("PORT", "8000") // predefined var
 
-	err := dotenv.Load("testdata/.env", "testdata/.env.production")
+	err := dotenv.LoadTesting(t, "testdata/.env", "testdata/.env.production")
 	if err != nil {
-		t.Errorf("error not expected: %s", err)
+		t.Fatalf("error not expected: %s", err)
 	}
 
 	if got, want := os.Getenv("ENV"), "dev"; got != want {
@@ -37,11 +38,12 @@ func TestLoad(t *testing.T) {
 func TestLoad_Override(t *testing.T) {
 	t.Setenv("ENV", "dev") // predefined var
 
-	dotenv.SetOverride()
+	t.Cleanup(func() { dotenv.SetOverride(false) })
+	dotenv.SetOverride(true)
 
-	err := dotenv.Load("testdata/.env", "testdata/.env.production")
+	err := dotenv.LoadTesting(t, "testdata/.env", "testdata/.env.production")
 	if err != nil {
-		t.Errorf("error not expected: %s", err)
+		t.Fatalf("error not expected: %s", err)
 	}
 
 	if got, want := os.Getenv("ENV"), "production"; got != want {
@@ -57,13 +59,65 @@ func TestLoad_Override(t *testing.T) {
 	}
 }
 
-func TestLoad_FileNotExists(t *testing.T) {
-	if err := dotenv.Load(); err != nil {
-		t.Errorf("error not expected: %s", err)
+func TestRead(t *testing.T) {
+	t.Setenv("ENV", "dev")   // predefined var is not considered
+	t.Setenv("PORT", "8000") // predefined var is considered when expanding
+
+	kv, err := dotenv.Read("testdata/.env", "testdata/.env.production")
+	if err != nil {
+		t.Fatalf("error not expected: %s", err)
 	}
 
-	dotenv.SetRequireFileExists()
-	if err := dotenv.Load(); !errors.Is(err, os.ErrNotExist) {
-		t.Errorf("expected os.ErrNotExist: %s", err)
+	if got, want := kv["ENV"], "test"; got != want {
+		t.Log("should not override predefined var")
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+
+	if got, want := kv["HOST"], "localhost:8000"; got != want {
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+
+	if got, want := kv["URL"], "http://localhost:8000"; got != want {
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+
+	if got, want := kv["ANYTHING"], "what ever have after the equal sign =/\\\"`'||; works"; got != want {
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+}
+
+func TestRead_Override(t *testing.T) {
+	t.Setenv("ENV", "dev") // predefined var is not considered
+
+	t.Cleanup(func() { dotenv.SetOverride(false) })
+	dotenv.SetOverride(true)
+
+	kv, err := dotenv.Read("testdata/.env", "testdata/.env.production")
+	if err != nil {
+		t.Fatalf("error not expected: %s", err)
+	}
+
+	if got, want := kv["ENV"], "production"; got != want {
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+
+	if got, want := kv["HOST"], "example.com"; got != want {
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+
+	if got, want := kv["URL"], "https://example.com"; got != want {
+		t.Errorf("expected=%s, got=%s", want, got)
+	}
+}
+
+func TestLoad_FileNotExists(t *testing.T) {
+	if err := dotenv.LoadTesting(t); err != nil {
+		t.Fatalf("error not expected: %s", err)
+	}
+
+	t.Cleanup(func() { dotenv.SetRequireFileExists(false) })
+	dotenv.SetRequireFileExists(true)
+	if err := dotenv.LoadTesting(t); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("expected os.ErrNotExist: %s", err)
 	}
 }
