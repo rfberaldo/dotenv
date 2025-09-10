@@ -25,21 +25,24 @@ if err := dotenv.Load(); err != nil {
 }
 ```
 
-Variables are expanded by default, meaning that if your .env has:
+Variables are expanded by default, meaning that if your file has:
 
-```conf
-HOST=localhost:8000
+```ini
+PORT=8000
+HOST=localhost:${PORT}
 URL=http://${HOST}
 ```
 
-After loading, `os.Getenv("URL")` will produce `http://localhost:8000`.
+After loading, `os.Getenv("URL")` would produce `http://localhost:8000`.
+
+### Overriding
 
 By default, dotenv won't overwrite existing environment variables, the first file to set a variable will have priority.
 
 To make it override, use `SetOverride`. In this mode, the last file to set a variable will have priority.
 
 ```go
-dotenv.SetOverride()
+dotenv.SetOverride(true)
 if err := dotenv.Load(".env", ".env.production"); err != nil {
   log.Fatal(err)
 }
@@ -49,20 +52,47 @@ By default, dotenv won't return error if file do not exists.
 To force a file to exist, use `SetRequireFileExists`.
 
 ```go
-dotenv.SetRequireFileExists()
+dotenv.SetRequireFileExists(true)
 if err := dotenv.Load(); err != nil {
   log.Fatal(err)
 }
 ```
 
-## Parsing
+### Reading
 
-Parse a string to get a key-value pair map. Parse will not expand the variable.
+It's also possible to get a key-value pair map instead of populating the environment.
+
+Read follows the same rules as Load, but will return a map.
+Predefined vars are only considered for expanding.
 
 ```go
-kv, err := dotenv.Parse("ENV=dev\nHOST=localhost:8000")
+kv, err := dotenv.Read() // returns map[string]string
+if err != nil {
+  log.Fatal(err)
+}
+```
+
+### Testing
+
+dotenv exposes a helper function for testing called `LoadTesting`.
+It will use `t.Setenv()` instead of `os.Setenv`.
+
+```go
+if err := dotenv.LoadTesting(t); err != nil {
+  t.Fatal(err)
+}
+```
+
+### Parsing
+
+Parse is a primitive, it receives a string and returns a key-value pair map.
+However will not expand the variables.
+
+```go
+str := "PORT=8000\nHOST=localhost:${PORT}"
+kv, err := dotenv.Parse(strings.NewReader(str))
 // Output: map[string]string{
-//   "ENV":  "dev",
-//   "HOST": "localhost:8000",
+//   "PORT": "8000",
+//   "HOST": "localhost:${PORT}",
 // }
 ```
