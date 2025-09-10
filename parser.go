@@ -30,19 +30,21 @@ func Parse(r io.Reader) (map[string]string, error) {
 	return kv, nil
 }
 
-func parseFile(path string) ([]pair, error) {
+func parseFile(path string) (pairs []pair, err error) {
 	path = filepath.FromSlash(path)
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("dotenv: opening %q file: %w", path, err)
 	}
 
-	pairs, err := parse(file)
+	defer func() { err = file.Close() }()
+
+	pairs, err = parse(file)
 	if err != nil {
 		return nil, fmt.Errorf("dotenv: parsing %q file: %w", path, err)
 	}
 
-	return pairs, file.Close()
+	return pairs, err
 }
 
 func parse(r io.Reader) ([]pair, error) {
